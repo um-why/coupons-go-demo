@@ -4,20 +4,20 @@
 
 1、 卡券列表及部分状态说明
 
-![卡券列表及状态部分说明](prd1.png)
+![卡券列表及状态部分说明](https://gitee.com/um-why/coupons-go-demo/raw/master/doc/prd1.png)
 
 2、 卡券创建和编辑、卡券字段说明
 
-![创建及编辑卡券、卡券字段说明](prd2.png)
+![创建及编辑卡券、卡券字段说明](https://gitee.com/um-why/coupons-go-demo/raw/master/doc/prd2.png)
 
 3、 卡券领取记录列表
 
-![卡券领取记录列表](prd3.png)
+![卡券领取记录列表](https://gitee.com/um-why/coupons-go-demo/raw/master/doc/prd3.png)
 
 4、 管理后台卡券核销
 
-![卡券核销](prd4.png)
+![卡券核销](https://gitee.com/um-why/coupons-go-demo/raw/master/doc/prd4.png)
 
 5、 手机端核销卡券
 
-![手机端核销卡券](prd5.png)
+![手机端核销卡券](https://gitee.com/um-why/coupons-go-demo/raw/master/doc/prd5.png)
