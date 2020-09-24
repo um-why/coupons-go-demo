@@ -66,6 +66,49 @@ func ScenterRole() gin.HandlerFunc {
 	}
 }
 
+func NpcRole() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ticket := c.GetHeader("ticket")
+		if ticket == "" {
+			c.AbortWithStatusJSON(433, gin.H{
+				"errcode": 433,
+				"errmsg":  "登录状态错误",
+			})
+			return
+		}
+		var checkTicket *checkTicket
+		client := rpc.NewClient("tcp://192.168.56.3:10000")
+		client.UseService(&checkTicket)
+		checkRs, err := checkTicket.CheckTicket(ticket)
+		if err != nil {
+			c.AbortWithStatusJSON(433, gin.H{
+				"errcode": 433,
+				"errmsg":  "登录状态错误.",
+			})
+			return
+		}
+		if checkRs.Errcode != 0 {
+			c.AbortWithStatusJSON(433, gin.H{
+				"errcode": 433,
+				"errmsg":  "登录状态错误:" + checkRs.Errmsg,
+			})
+			return
+		}
+		if checkRs.Platform != "admin" {
+			c.AbortWithStatusJSON(433, gin.H{
+				"errcode": 433,
+				"errmsg":  "不是NPC用户角色",
+			})
+			return
+		}
+		c.Params = append(c.Params, gin.Param{
+			Key:   "admin_id",
+			Value: strconv.Itoa(int(checkRs.User.Id)),
+		})
+		c.Next()
+	}
+}
+
 func main() {
 	router := gin.New()
 
@@ -82,6 +125,15 @@ func main() {
 		scenter.POST("/manage/coupon/check/:code", manage.CheckSale)
 		scenter.GET("/manage/coupon/id/:id/statistics", manage.Statistics)
 		scenter.GET("/manage/coupon/id/:id/receive", manage.Receive)
+	}
+
+	npc := router.Group("/")
+	npc.Use(NpcRole())
+	{
+		npc.GET("/su/coupon/list", manage.GetLists)
+		npc.GET("/su/coupon/id/:id", manage.GetDetail)
+		npc.GET("/su/coupon/id/:id/statistics", manage.Statistics)
+		npc.GET("/su/coupon/id/:id/receive", manage.Receive)
 	}
 
 	router.Run(":8080")

@@ -74,8 +74,8 @@ func init() {
 		log.New(os.Stdout, "\r\n", log.LstdFlags),
 		logger.Config{
 			SlowThreshold: time.Microsecond,
-			//LogLevel:      logger.Info,
-			LogLevel: logger.Error,
+			LogLevel:      logger.Info,
+			//LogLevel: logger.Error,
 			Colorful: false,
 		},
 	)
@@ -98,6 +98,8 @@ func Add(c *gin.Context) {
 	if c.ShouldBind(&coupon) != nil {
 		fmt.Println("nil error")
 	}
+	_storeId, _ := strconv.Atoi(c.Param("store_id"))
+	coupon.StoreId = int32(_storeId)
 	checkCouponParam(coupon, false)
 
 	openNum := getOpenTotal(coupon.StoreId)
@@ -272,7 +274,7 @@ type fmtCouponsList struct {
 }
 
 func GetLists(c *gin.Context) {
-	storeId, _ := strconv.Atoi(c.DefaultQuery("store_id", "0"))
+	storeId, _ := strconv.Atoi(c.Param("store_id"))
 	if storeId <= 0 {
 		storeId = 0
 	}
@@ -379,6 +381,12 @@ func GetDetail(c *gin.Context) {
 	if coupon.Id <= 0 {
 		panic("未找到")
 	}
+	storeId, _ := strconv.Atoi(c.Param("store_id"))
+	if storeId > 0 {
+		if coupon.StoreId != int32(storeId) {
+			panic("未找到")
+		}
+	}
 	var _coupons fmtCouponsDetail
 	_coupons.Id = coupon.Id
 	_coupons.Name = coupon.Name
@@ -427,9 +435,16 @@ func Edit(c *gin.Context) {
 	if id <= 0 {
 		panic("参数错误")
 	}
+	storeId, _ := strconv.Atoi(c.Param("store_id"))
+	if storeId <= 0 {
+		panic("未找到")
+	}
 	var coupon Coupons
 	Db.First(&coupon, id)
 	if coupon.Id <= 0 {
+		panic("未找到")
+	}
+	if storeId != int(coupon.StoreId) {
 		panic("未找到")
 	}
 	if coupon.StatusReceive == 2 {
@@ -440,6 +455,7 @@ func Edit(c *gin.Context) {
 	if c.ShouldBind(&_coupon) != nil {
 		panic("参数错误")
 	}
+	_coupon.StoreId = int32(storeId)
 	checkCouponParam(_coupon, true)
 	totalNum := getStoreTotalCoupon(coupon.StoreId, coupon.Id)
 	if totalNum+int(_coupon.Total) > 999999 {
@@ -487,9 +503,16 @@ func Operation(c *gin.Context) {
 	if id <= 0 {
 		panic("参数错误")
 	}
+	storeId, _ := strconv.Atoi(c.Param("store_id"))
+	if storeId <= 0 {
+		panic("未找到")
+	}
 	var coupon Coupons
 	Db.First(&coupon, id)
 	if coupon.Id <= 0 {
+		panic("未找到")
+	}
+	if storeId != int(coupon.StoreId) {
 		panic("未找到")
 	}
 	if coupon.StatusReceive == 2 {
@@ -537,9 +560,16 @@ func Delete(c *gin.Context) {
 	if id <= 0 {
 		panic("参数错误")
 	}
+	storeId, _ := strconv.Atoi(c.Param("store_id"))
+	if storeId <= 0 {
+		panic("未找到")
+	}
 	var coupon Coupons
 	Db.First(&coupon, id)
 	if coupon.Id <= 0 {
+		panic("未找到")
+	}
+	if storeId != int(coupon.StoreId) {
 		panic("未找到")
 	}
 	if coupon.StatusReceive != 2 {
@@ -594,7 +624,10 @@ type fmtStore struct {
 func GetByCheckCode(c *gin.Context) {
 	defer errMsg(c)
 	code := c.Param("code")
-	storeId, _ := strconv.Atoi(c.DefaultQuery("store_id", "0"))
+	storeId, _ := strconv.Atoi(c.Param("store_id"))
+	if storeId <= 0 {
+		panic("需要先登录")
+	}
 	var couponUser CouponUser
 	Db.Where("check_code = ? and store_id = ?", code, storeId).First(&couponUser)
 	if couponUser.Id <= 0 {
@@ -702,7 +735,10 @@ func getStoreInfo(storeId int32) fmtStore {
 func CheckSale(c *gin.Context) {
 	defer errMsg(c)
 	code := c.Param("code")
-	storeId, _ := strconv.Atoi(c.DefaultPostForm("store_id", "0"))
+	storeId, _ := strconv.Atoi(c.Param("store_id"))
+	if storeId <= 0 {
+		panic("未找到")
+	}
 	isEnforce := c.DefaultPostForm("is_enforce", "0")
 	var couponUser CouponUser
 	Db.Where("check_code = ? and store_id = ?", code, storeId).First(&couponUser)
@@ -751,7 +787,7 @@ type fmtStatistics struct {
 func Statistics(c *gin.Context) {
 	defer errMsg(c)
 	couponId := c.Param("id")
-	storeId, _ := strconv.Atoi(c.DefaultQuery("store_id", "0"))
+	storeId, _ := strconv.Atoi(c.Param("store_id"))
 	var coupon Coupons
 	Db.Where("id = ?", couponId).First(&coupon)
 	if coupon.Id <= 0 {
